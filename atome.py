@@ -1,19 +1,20 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 
 # Configuration de la page Streamlit
-st.set_page_config(page_title="Modèle Atomique par Sous-couches", layout="wide")
+st.set_page_config(page_title="Modèle Atomique Complet", layout="wide")
 
-# Dictionnaire des 20 premiers éléments
+# Dictionnaire des 20 premiers éléments : {Z: ('Symbole', 'Nom', N_neutrons_isotope_principal)}
 ELEMENTS = {
-    1: ('H', 'Hydrogène'), 2: ('He', 'Hélium'), 3: ('Li', 'Lithium'),
-    4: ('Be', 'Béryllium'), 5: ('B', 'Bore'), 6: ('C', 'Carbone'),
-    7: ('N', 'Azote'), 8: ('O', 'Oxygène'), 9: ('F', 'Fluor'),
-    10: ('Ne', 'Néon'), 11: ('Na', 'Sodium'), 12: ('Mg', 'Magnésium'),
-    13: ('Al', 'Aluminium'), 14: ('Si', 'Silicium'), 15: ('P', 'Phosphore'),
-    16: ('S', 'Soufre'), 17: ('Cl', 'Chlore'), 18: ('Ar', 'Argon'),
-    19: ('K', 'Potassium'), 20: ('Ca', 'Calcium')
+    1: ('H', 'Hydrogène', 0), 2: ('He', 'Hélium', 2), 3: ('Li', 'Lithium', 4),
+    4: ('Be', 'Béryllium', 5), 5: ('B', 'Bore', 6), 6: ('C', 'Carbone', 6),
+    7: ('N', 'Azote', 7), 8: ('O', 'Oxygène', 8), 9: ('F', 'Fluor', 10),
+    10: ('Ne', 'Néon', 10), 11: ('Na', 'Sodium', 12), 12: ('Mg', 'Magnésium', 12),
+    13: ('Al', 'Aluminium', 14), 14: ('Si', 'Silicium', 14), 15: ('P', 'Phosphore', 16),
+    16: ('S', 'Soufre', 16), 17: ('Cl', 'Chlore', 18), 18: ('Ar', 'Argon', 22),
+    19: ('K', 'Potassium', 20), 20: ('Ca', 'Calcium', 20)
 }
 
 def get_configuration(Z):
@@ -30,36 +31,56 @@ def get_configuration(Z):
     
     return config
 
-def dessiner_atome(Z, symbole, nom):
-    """Génère le graphique Matplotlib avec l'esthétique demandée."""
+def dessiner_atome(Z, N, symbole, nom):
+    """Génère le graphique Matplotlib avec le noyau (protons/neutrons) et les couches."""
     config = get_configuration(Z)
     
-    # Création de la figure avec fond gris clair
     couleur_fond = '#eaeaea'
     fig, ax = plt.subplots(figsize=(8, 8))
     fig.patch.set_facecolor(couleur_fond)
     ax.set_facecolor(couleur_fond)
     
-    # Représentation du noyau (cercle orange)
-    noyau = plt.Circle((0, 0), 0.6, color='#ea8c00', zorder=5)
-    ax.add_patch(noyau)
-    ax.text(0, 0, f"Noyau\n{symbole}", color='#333333', fontsize=12, 
-            ha='center', va='center', fontweight='bold', zorder=6)
+    # --- 1. DESSIN DU NOYAU (Cluster de protons et neutrons) ---
+    particules = ['p'] * Z + ['n'] * N
+    random.seed(42) # Fixer la graine pour que le noyau ait toujours le même aspect visuel
+    random.shuffle(particules)
     
-    # Propriétés visuelles des sous-couches : (rayon, couleur, angle_label_deg)
-    # Les sous-couches d'une même couche (K, L, M...) ont la même couleur.
+    # Angle d'or pour une répartition homogène type "fleur de tournesol"
+    golden_angle = np.pi * (3 - np.sqrt(5))
+    
+    for i, p in enumerate(particules):
+        # Rayon de la spirale (0.13 gère l'espacement entre les nucléons)
+        r_nucleon = 0.13 * np.sqrt(i) 
+        theta = i * golden_angle
+        
+        x = r_nucleon * np.cos(theta)
+        y = r_nucleon * np.sin(theta)
+        
+        # Choix de la couleur : Rouge pour Proton, Gris/Bleuté pour Neutron
+        couleur_nucleon = '#ff4d4d' if p == 'p' else '#85929e'
+        bordure = '#cc0000' if p == 'p' else '#5d6d7e'
+        
+        cercle = plt.Circle((x, y), 0.10, color=couleur_nucleon, ec=bordure, lw=0.5, zorder=5)
+        ax.add_patch(cercle)
+
+    # Étiquette du noyau décalée juste au-dessus
+    r_max_noyau = 0.13 * np.sqrt(len(particules)) if particules else 0
+    ax.text(0, r_max_noyau + 0.3, f"Noyau\n{symbole}", color='#333333', fontsize=12, 
+            ha='center', va='center', fontweight='bold', zorder=6,
+            bbox=dict(facecolor=couleur_fond, edgecolor='none', pad=1, alpha=0.7))
+
+    # --- 2. DESSIN DES COUCHES ÉLECTRONIQUES ---
     couches_meta = {
-        '1s': {'r': 2.0, 'color': '#007acc', 'label_angle': 70, 'couche': 'K'}, # Bleu
-        '2s': {'r': 3.2, 'color': '#75a82b', 'label_angle': 60, 'couche': 'L'}, # Vert
-        '2p': {'r': 3.6, 'color': '#75a82b', 'label_angle': 75, 'couche': 'L'},
-        '3s': {'r': 4.8, 'color': '#9b59b6', 'label_angle': 50, 'couche': 'M'}, # Violet
-        '3p': {'r': 5.2, 'color': '#9b59b6', 'label_angle': 65, 'couche': 'M'},
-        '4s': {'r': 6.4, 'color': '#e74c3c', 'label_angle': 45, 'couche': 'N'}  # Rouge
+        '1s': {'r': 2.5, 'color': '#007acc', 'label_angle': 70, 'couche': 'K'},
+        '2s': {'r': 3.7, 'color': '#75a82b', 'label_angle': 60, 'couche': 'L'},
+        '2p': {'r': 4.1, 'color': '#75a82b', 'label_angle': 75, 'couche': 'L'},
+        '3s': {'r': 5.3, 'color': '#9b59b6', 'label_angle': 50, 'couche': 'M'},
+        '3p': {'r': 5.7, 'color': '#9b59b6', 'label_angle': 65, 'couche': 'M'},
+        '4s': {'r': 6.9, 'color': '#e74c3c', 'label_angle': 45, 'couche': 'N'}
     }
     
-    max_radius = 1
+    max_radius = 2.5
     
-    # Tracé des orbites et des électrons
     for sous_couche, nb_e in config.items():
         if nb_e > 0:
             meta = couches_meta[sous_couche]
@@ -67,11 +88,11 @@ def dessiner_atome(Z, symbole, nom):
             couleur = meta['color']
             max_radius = max(max_radius, r)
             
-            # Dessin de l'orbite (trait continu plein)
+            # Orbite
             cercle = plt.Circle((0, 0), r, color=couleur, fill=False, linewidth=1.5, zorder=1)
             ax.add_patch(cercle)
             
-            # Ajout de l'étiquette (ex: '1s') avec un fond blanc pour la lisibilité
+            # Étiquette (1s, 2s...)
             angle_rad_label = np.radians(meta['label_angle'])
             x_label = r * np.cos(angle_rad_label)
             y_label = r * np.sin(angle_rad_label)
@@ -79,18 +100,16 @@ def dessiner_atome(Z, symbole, nom):
                     ha='center', va='center', fontweight='bold',
                     bbox=dict(facecolor='white', edgecolor='none', pad=2, alpha=0.9), zorder=2)
             
-            # Calcul de la position des électrons
-            # Un petit décalage (offset) évite que tous les électrons soient alignés sur l'axe X
+            # Électrons
             offset_angle = np.pi / 4 if sous_couche.endswith('s') else 0
             angles = np.linspace(0, 2 * np.pi, nb_e, endpoint=False) + offset_angle
             x_e = r * np.cos(angles)
             y_e = r * np.sin(angles)
             
-            # Dessin des électrons (gros points gris foncé/noirs)
-            ax.plot(x_e, y_e, 'o', color='#2b2b2b', markersize=14, zorder=4)
+            ax.plot(x_e, y_e, 'o', color='#2b2b2b', markersize=12, zorder=4)
 
-    # Paramétrage final de la zone de dessin
-    limite = max_radius + 1
+    # Paramétrage final
+    limite = max_radius + 1.2
     ax.set_aspect('equal')
     ax.set_xlim(-limite, limite)
     ax.set_ylim(-limite, limite)
@@ -102,27 +121,41 @@ def dessiner_atome(Z, symbole, nom):
 # --- INTERFACE UTILISATEUR STREAMLIT ---
 
 st.sidebar.title("⚛️ Configuration")
-liste_choix = [f"{Z} - {nom} ({symbole})" for Z, (symbole, nom) in ELEMENTS.items()]
-choix = st.sidebar.selectbox("Sélectionne un atome (Z=1 à 20) :", liste_choix, index=5) # Carbone (Z=6) par défaut
+liste_choix = [f"{Z} - {nom} ({symbole})" for Z, (symbole, nom, N) in ELEMENTS.items()]
+choix = st.sidebar.selectbox("Sélectionne un atome (Z=1 à 20) :", liste_choix, index=5)
 
 Z_choisi = int(choix.split(" - ")[0])
-symbole_choisi, nom_choisi = ELEMENTS[Z_choisi]
+symbole_choisi, nom_choisi, N_choisi = ELEMENTS[Z_choisi]
 config = get_configuration(Z_choisi)
+A_masse = Z_choisi + N_choisi
 
-st.title(f"Atome de {nom_choisi} ({symbole_choisi}, Z={Z_choisi})")
+st.title(f"Atome de {nom_choisi} ({symbole_choisi})")
+st.markdown(f"**Isotope principal :** Masse A = {A_masse} | Numéro atomique Z = {Z_choisi}")
 
 col_gauche, col_droite = st.columns([2, 1])
 
-# Colonne Gauche : Modèle visuel
 with col_gauche:
-    fig = dessiner_atome(Z_choisi, symbole_choisi, nom_choisi)
+    fig = dessiner_atome(Z_choisi, N_choisi, symbole_choisi, nom_choisi)
     st.pyplot(fig)
-
-# Colonne Droite : Explications pédagogiques
-with col_droite:
-    st.subheader(f"Configuration Électronique")
     
-    # Regroupement par couches principales (K, L, M, N)
+    # Légende pour le noyau affichée sous le graphique
+    st.markdown("""
+    <div style='display: flex; justify-content: center; gap: 20px;'>
+        <div><span style='color: #ff4d4d;'>●</span> <b>Protons (p⁺)</b></div>
+        <div><span style='color: #85929e;'>●</span> <b>Neutrons (n⁰)</b></div>
+        <div><span style='color: #2b2b2b;'>●</span> <b>Électrons (e⁻)</b></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_droite:
+    st.subheader(f"Composition du Noyau")
+    st.write(f"- **{Z_choisi}** Protons (charge +)")
+    st.write(f"- **{N_choisi}** Neutrons (charge 0)")
+    st.write(f"- Nucléons totaux (A) : **{A_masse}**")
+
+    st.markdown("---")
+    
+    st.subheader(f"Cortège Électronique")
     if config['1s'] > 0:
         st.markdown("**Couche K (n=1)** :")
         st.markdown(f"- Sous-couche 1s ({config['1s']} e⁻)")
@@ -140,9 +173,3 @@ with col_droite:
     if config['4s'] > 0:
         st.markdown("**Couche N (n=4)** :")
         st.markdown(f"- Sous-couche 4s ({config['4s']} e⁻)")
-
-    st.info("💡 **Principe de construction**\n\n"
-            "Ce modèle montre comment les électrons remplissent "
-            "progressivement les sous-couches (s, p...) qui composent "
-            "les grandes couches principales (K, L, M...). "
-            "Les orbites rapprochées et de même couleur appartiennent à la même couche principale.")
