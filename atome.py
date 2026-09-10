@@ -143,7 +143,7 @@ with col_droite:
     
     if niveau.startswith("Collège"):
         st.write(f"L'atome est électriquement neutre. Il possède autant d'électrons que de protons.")
-        st.write(f"- **Électrons totaux : {Z_choisi}**")
+        st.write(f"- **Électrons (charge négative) : {Z_choisi}**")
     else:
         config = get_configuration(Z_choisi)
         if config['1s'] > 0:
