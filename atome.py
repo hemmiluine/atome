@@ -134,8 +134,8 @@ with col_gauche:
 
 with col_droite:
     st.subheader("Composition du Noyau")
-    st.write(f"- **{Z_choisi}** Protons (charge +)")
-    st.write(f"- **{N_choisi}** Neutrons (charge 0)")
+    st.write(f"- **{Z_choisi}** Protons (charge positive)")
+    st.write(f"- **{N_choisi}** Neutrons (charge neutre)")
     st.write(f"- Nucléons totaux (A) : **{A_masse}**")
 
     st.markdown("---")
