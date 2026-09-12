@@ -9,19 +9,18 @@ n = st.slider("Nombre d'atomes de carbone (n)", min_value=1, max_value=20, value
 # Calcul du nombre d'atomes d'hydrogène (2n + 2)
 h = 2 * n + 2
 
-# Formatage de la formule brute (gestion du cas n=1 où on omet le "1" pour C)
+# Formatage de la formule brute
 alcane_formula = f"C_{{{n}}}H_{{{h}}}" if n > 1 else f"CH_{{{h}}}"
 
 st.subheader("Formule brute de l'alcane :")
-st.latex(alcane_formula)
+# On ajoute l'indice (g) à l'affichage de la formule brute
+st.latex(f"{{{alcane_formula}}}_{{(g)}}")
 
 # Bouton d'action
 if st.button("Résoudre l'équation de combustion"):
     # Logique d'équilibrage : C_nH_2n+2 + O_2 -> CO_2 + H_2O
-    # L'oxygène nécessaire du côté droit est : 2*n (pour CO2) + (n+1) (pour H2O) = 3n + 1
     o_atoms = 3 * n + 1
     
-    # Au collège, on évite les fractions (ex: 7/2 O2). Si 3n+1 est impair, on double tous les coefficients.
     if o_atoms % 2 == 0:
         a = 1
         b = o_atoms // 2
@@ -33,12 +32,19 @@ if st.button("Résoudre l'équation de combustion"):
         c = 2 * n
         d = 2 * (n + 1)
         
-    # Fonction pour masquer le coefficient "1" (on n'écrit pas 1CO2)
     def fmt_c(coeff):
         return "" if coeff == 1 else str(coeff)
 
     # Création de la chaîne au format LaTeX
-    equation = f"{fmt_c(a)}{alcane_formula} + {fmt_c(b)}O_2 \\rightarrow {fmt_c(c)}CO_2 + {fmt_c(d)}H_2O"
+    # 1. \xrightarrow{\text{énergie}} crée la flèche avec le mot au-dessus
+    # 2. Les molécules sont mises entre accolades {...}_{(g)} pour grouper correctement l'indice
+    equation = (
+        f"{fmt_c(a)}{{{alcane_formula}}}_{{(g)}} + "
+        f"{fmt_c(b)}{{O_2}}_{{(g)}} "
+        f"\\xrightarrow{{\\text{{énergie}}}} "
+        f"{fmt_c(c)}{{CO_2}}_{{(g)}} + "
+        f"{fmt_c(d)}{{H_2O}}_{{(g)}}"
+    )
     
     st.subheader("Équation de combustion complète :")
     st.latex(equation)
