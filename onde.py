@@ -37,8 +37,14 @@ def generate_vectors(x_array, phase_array, is_electric):
 # --- Génération des images (frames) de l'animation ---
 # On calcule une seule période temporelle complète découpée en 40 images.
 # Plotly va les lire en boucle continuellement.
-nb_frames = 40
-t_values = np.linspace(0, T, nb_frames, endpoint=False)
+# --- Génération des images (frames) de l'animation ---
+# On calcule plusieurs périodes pour que l'animation dure beaucoup plus longtemps
+nb_cycles = 15  # L'onde effectuera 15 oscillations avant de s'arrêter (modifiable)
+images_par_cycle = 30 # 30 images par oscillation garantit une bonne fluidité sans surcharger la mémoire
+total_frames = nb_cycles * images_par_cycle
+
+# On étire le temps calculé sur le nombre total de cycles souhaité
+t_values = np.linspace(0, nb_cycles * T, total_frames, endpoint=False)
 frames = []
 
 for k, t in enumerate(t_values):
@@ -46,7 +52,7 @@ for k, t in enumerate(t_values):
     E, xE_v, yE_v, zE_v = generate_vectors(x, phase, is_electric=True)
     B, xB_v, yB_v, zB_v = generate_vectors(x, phase, is_electric=False)
     
-    # On met à jour les 4 premières courbes (enveloppes + vecteurs)
+    # On met à jour les 4 courbes (enveloppes + vecteurs)
     frames.append(go.Frame(
         data=[
             go.Scatter3d(x=x, y=E, z=np.zeros_like(x)),
